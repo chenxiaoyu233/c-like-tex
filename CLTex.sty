@@ -1,0 +1,71 @@
+% vim: set filetype=plaintex : 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{CLTex}[2019/07/23 CLTex]
+
+% tikz package could offer some support for expression
+\usepackage{tikz}
+
+% temp var
+\newtoks\ExpRet
+
+% statement: \Exp <var0> = <exp>
+\long\def\Exp#1=#2{
+    \expandafter\pgfmathparse\expandafter{#2} %
+    \ExpRet={\pgfmathresult}
+    \edef#1{\the\ExpRet}
+    \aftergroup#1
+}
+
+% usage
+% \Exp \x = {\x + 2 + 3} 
+
+% statement: \If (<exp>) <body> else <body>
+\long\def\If(#1)#2else#3{
+    \def\exp{#1}
+    \Exp \flag = {\exp}
+    \ifnum \the\ExpRet=0 {
+        #3
+    } \else {
+        #2
+    }\fi
+}
+
+% usage
+% \Exp \x = 2
+% \If(\x + 1 >= 2) {
+%     A
+% } else {
+%     B
+% }
+
+% statement: \iterator <var> <body> <list0>, <list1>, ...
+% an aux function for implement 'foreach'
+\long\def\iterator#1#2#3,{
+    \def\temp{#3}
+    \def\EM{\par}
+    \ifx \temp \EM
+        \message{stop}
+        \let\next=\relax
+    \else
+        \def#1{#3}
+        #2
+        \def\next{\iterator{#1}{#2}}
+    \fi
+    \next
+}
+
+% statement: \Foreach <var> in <list> <body>
+% function: start a loop using a list
+% <var>: the loop variable you want to use
+% <list>: the list that the loop based on
+% <body>: the operation you want to perform in each iteration
+\long\def\Foreach#1in#2#3{
+    \iterator{#1}{#3}#2,\par,
+}
+
+% usage
+%\Foreach \x in {1,2,3,4,5} {
+%    \Foreach \y in {1,2,3,4,5} {
+%        (\x, \y) \par
+%    }
+%}
